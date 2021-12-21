@@ -1,0 +1,911 @@
+---
+title: "New Project Stat 472"
+author: "Ian Hall and Mark Gardner"
+date: "3/16/2021"
+output: html_document
+---
+
+Potential formula to calculate effectiveness of PER for team:
+$Y_1,...,Y_n$ = PER for each individual player on a team, n = total number of players on a team\newline
+OT = number of overtimes\newline
+GP = Games played\newline
+48 is the number of minutes in a non overtime game\newline
+5 is the number of players on the floor at a time\newline
+$\frac{\frac{\sum^n_{i=1}Y_i}{48+ (\frac{OT}{GP}*5)}}{5}$ This number should average to 15 over the whole league\newline\
+This should be the overall average of PER for a full team. We can rank these values and compare them to another test statistic involving wins and success\newline\
+Formula to compare this to:\newline
+PF = Point for (team)
+PA = Points against (team)
+W = wins
+L = Losses
+$\frac{W}{L} * \frac{PF}{PA} * 15$ Win-Loss ratio and Points for-against ratio should average to 1 for the league so this should average to 15. This should someone account for overall effectiveness of a team. Strength of schedule could somehow be added to make this a better estimator.\newline
+One problem is accounting for mid season trades
+
+```{r}
+library(dplyr)
+library(readxl)
+Individual_Games_NBA_2018_2019 <- read_xlsx("individualGames.xlsx")
+Players_Stats_2018_2019_NBA_no_PER <- read_xlsx("playerStats.xlsx")
+Team_Efficiency_2018_2019 <- read_xlsx("teamEfficiency.xlsx")
+Team_Efficiency_2008_2020 <- read_xlsx("teamEfficiencyNBA20082020.xlsx")
+Team_Efficiency_2008_2020$Win_Percentage <- (Team_Efficiency_2008_2020$Wins/(Team_Efficiency_2008_2020$Losses+ Team_Efficiency_2008_2020$Wins))
+Team_Efficiency_2008_2020$Point_Diff <- Team_Efficiency_2008_2020$`OFF EFF` - Team_Efficiency_2008_2020$`DEF EFF`
+
+Team_Efficiency_2008_2012 <- filter(Team_Efficiency_2008_2020, Year == "2008-2009" | Year == "2009-2010" | Year == "2011-2012")
+Team_Efficiency_2012_2020 <- filter(Team_Efficiency_2008_2020, Year == "2012-2013" | Year == "2013-2014" | Year == "2014-2015" | Year == "2015-2016" | Year == "2016-2017" | Year == "2017-2018" | Year == "2018-2019" | Year == "2019-2020")
+Team_Efficiency_2008_2020$AST_TO_ratio <- Team_Efficiency_2008_2020$AST/Team_Efficiency_2008_2020$TO
+Team_Efficiency_2012_2020$AST_TO_ratio <- Team_Efficiency_2012_2020$AST/Team_Efficiency_2012_2020$TO
+
+West <- filter(Team_Efficiency_2008_2020, Conference == "West")
+East <- filter(Team_Efficiency_2008_2020, Conference == "East")
+
+
+factor = 2/3 -((0.5 * sum(Players_Stats_2018_2019_NBA_no_PER$AST)/sum(Players_Stats_2018_2019_NBA_no_PER$FG)) / (2 * sum(Players_Stats_2018_2019_NBA_no_PER$FG)/sum(Players_Stats_2018_2019_NBA_no_PER$FT)))
+
+VOP = sum(Players_Stats_2018_2019_NBA_no_PER$PTS) / (sum(Players_Stats_2018_2019_NBA_no_PER$FGA) - sum(Players_Stats_2018_2019_NBA_no_PER$ORB) + sum(Players_Stats_2018_2019_NBA_no_PER$TOV) + 0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA))
+
+DRBP = (sum(Players_Stats_2018_2019_NBA_no_PER$TRB) - sum(Players_Stats_2018_2019_NBA_no_PER$ORB))/sum(Players_Stats_2018_2019_NBA_no_PER$TRB)
+```
+
+TEAM FILTER
+```{r}
+#Team filter
+BRK_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Brooklyn")
+LAC_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "LA Clippers")
+UTA_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Utah")
+MIL_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Milwaukee")
+DEN_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Denver")
+PHO_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Phoenix")
+NOP_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "New Orleans")
+POR_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Portland")
+SAC_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Sacramento")
+ATL_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Atlanta")
+PHI_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Philadelphia")
+DAL_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Dallas")
+BOS_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Boston")
+TOR_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Toronto")
+CHO_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Charlotte")
+CHI_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Chicago")
+LAL_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "LA Lakers")
+IND_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Indiana")
+MEM_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Memphis")
+SAS_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "San Antonio")
+WAS_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Washington")
+GSW_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Golden State")
+NYK_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "New York")
+MIA_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Miami")
+DET_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Detroit")
+MIN_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Minnesota")
+OKC_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Oklahoma City")
+ORL_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Orlando")
+HOU_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Houston")
+CLE_TEAM = filter(Team_Efficiency_2018_2019, Team_Efficiency_2018_2019$TEAM == "Cleveland")
+```
+PLAYER FILTER
+```{r}
+#player team filter
+BRK_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "BRK")
+LAC_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "LAC")
+UTA_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "UTA")
+MIL_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "MIL")
+DEN_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "DEN")
+PHO_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "PHO")
+NOP_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "NOP")
+POR_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "POR")
+SAC_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "SAC")
+ATL_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "ATL")
+PHI_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "PHI")
+DAL_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "DAL")
+BOS_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "BOS")
+TOR_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "TOR")
+CHO_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "CHO")
+CHI_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "CHI")
+LAL_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "LAL")
+IND_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "IND")
+MEM_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "MEM")
+SAS_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "SAS")
+WAS_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "WAS")
+GSW_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "GSW")
+NYK_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "NYK")
+MIA_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "MIA")
+DET_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "DET")
+MIN_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "MIN")
+OKC_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "OKC")
+ORL_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "ORL")
+HOU_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "HOU")
+CLE_PLAYER = filter(Players_Stats_2018_2019_NBA_no_PER, Players_Stats_2018_2019_NBA_no_PER$Tm == "CLE")
+```
+BROOKLYN NETS
+```{r}
+#Brooklyn Nets uPER
+nloop = length(BRK_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] =  1 / BRK_PLAYER$MP[i] *(BRK_PLAYER$`3P`[i] - ((BRK_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((BRK_PLAYER$FT[i]/2) *(2-(sum(BRK_PLAYER$AST[i])))/ (3*sum(BRK_PLAYER$FG))) + (BRK_PLAYER$FG[i] * (2 - (factor * sum(BRK_PLAYER$AST))/sum(BRK_PLAYER$FG))) + (2*BRK_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * BRK_PLAYER$ORB[i] + BRK_PLAYER$BLK[i] - 0.2464 * (BRK_PLAYER$FTA[i] - BRK_PLAYER$FT[i]) - (BRK_PLAYER$FGA[i] - BRK_PLAYER$FG[i]) - BRK_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * BRK_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (BRK_PLAYER$TOV[i] + BRK_PLAYER$ORB[i]) + BRK_PLAYER$STL[i] + BRK_PLAYER$TRB[i] - 0.1936*(BRK_PLAYER$FTA[i] - BRK_PLAYER$FT[i])))
+}
+BRK_PLAYER$uPER = uPER
+```
+
+LA CLIPPERS
+```{r}
+#LA Clippers uPER
+nloop = length(LAC_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / LAC_PLAYER$MP[i] *(LAC_PLAYER$`3P`[i] - ((LAC_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((LAC_PLAYER$FT[i]/2) *(2-(sum(LAC_PLAYER$AST[i])))/ (3*sum(LAC_PLAYER$FG))) + (LAC_PLAYER$FG[i] * (2 - (factor * sum(LAC_PLAYER$AST))/sum(LAC_PLAYER$FG))) + (2*LAC_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * LAC_PLAYER$ORB[i] + LAC_PLAYER$BLK[i] - 0.2464 * (LAC_PLAYER$FTA[i] - LAC_PLAYER$FT[i]) - (LAC_PLAYER$FGA[i] - LAC_PLAYER$FG[i]) - LAC_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * LAC_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (LAC_PLAYER$TOV[i] + LAC_PLAYER$ORB[i]) + LAC_PLAYER$STL[i] + LAC_PLAYER$TRB[i] - 0.1936*(LAC_PLAYER$FTA[i] - LAC_PLAYER$FT[i])))
+}
+LAC_PLAYER$uPER = uPER
+```
+UTAH JAZZ
+```{r}
+#Utah Jazz uPER
+nloop = length(UTA_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / UTA_PLAYER$MP[i] *(UTA_PLAYER$`3P`[i] - ((UTA_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((UTA_PLAYER$FT[i]/2) *(2-(sum(UTA_PLAYER$AST[i])))/ (3*sum(UTA_PLAYER$FG))) + (UTA_PLAYER$FG[i] * (2 - (factor * sum(UTA_PLAYER$AST))/sum(UTA_PLAYER$FG))) + (2*UTA_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * UTA_PLAYER$ORB[i] + UTA_PLAYER$BLK[i] - 0.2464 * (UTA_PLAYER$FTA[i] - UTA_PLAYER$FT[i]) - (UTA_PLAYER$FGA[i] - UTA_PLAYER$FG[i]) - UTA_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * UTA_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (UTA_PLAYER$TOV[i] + UTA_PLAYER$ORB[i]) + UTA_PLAYER$STL[i] + UTA_PLAYER$TRB[i] - 0.1936*(UTA_PLAYER$FTA[i] - UTA_PLAYER$FT[i])))
+}
+UTA_PLAYER$uPER = uPER
+```
+MILWAUKEE BUCKS
+```{r}
+#Milwaukee Bucks uPER
+nloop = length(MIL_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / MIL_PLAYER$MP[i] *(MIL_PLAYER$`3P`[i] - ((MIL_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((MIL_PLAYER$FT[i]/2) *(2-(sum(MIL_PLAYER$AST[i])))/ (3*sum(MIL_PLAYER$FG))) + (MIL_PLAYER$FG[i] * (2 - (factor * sum(MIL_PLAYER$AST))/sum(MIL_PLAYER$FG))) + (2*MIL_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * MIL_PLAYER$ORB[i] + MIL_PLAYER$BLK[i] - 0.2464 * (MIL_PLAYER$FTA[i] - MIL_PLAYER$FT[i]) - (MIL_PLAYER$FGA[i] - MIL_PLAYER$FG[i]) - MIL_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * MIL_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (MIL_PLAYER$TOV[i] + MIL_PLAYER$ORB[i]) + MIL_PLAYER$STL[i] + MIL_PLAYER$TRB[i] - 0.1936*(MIL_PLAYER$FTA[i] - MIL_PLAYER$FT[i])))
+}
+MIL_PLAYER$uPER = uPER
+```
+DENVER NUGGETS
+```{r}
+#Denver Nuggets uPER
+nloop = length(DEN_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / DEN_PLAYER$MP[i] *(DEN_PLAYER$`3P`[i] - ((DEN_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((DEN_PLAYER$FT[i]/2) *(2-(sum(DEN_PLAYER$AST[i])))/ (3*sum(DEN_PLAYER$FG))) + (DEN_PLAYER$FG[i] * (2 - (factor * sum(DEN_PLAYER$AST))/sum(DEN_PLAYER$FG))) + (2*DEN_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * DEN_PLAYER$ORB[i] + DEN_PLAYER$BLK[i] - 0.2464 * (DEN_PLAYER$FTA[i] - DEN_PLAYER$FT[i]) - (DEN_PLAYER$FGA[i] - DEN_PLAYER$FG[i]) - DEN_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * DEN_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (DEN_PLAYER$TOV[i] + DEN_PLAYER$ORB[i]) + DEN_PLAYER$STL[i] + DEN_PLAYER$TRB[i] - 0.1936*(DEN_PLAYER$FTA[i] - DEN_PLAYER$FT[i])))
+}
+DEN_PLAYER$uPER = uPER
+```
+PHOENIX SUNS
+```{r}
+#Phoenix Suns uPER
+nloop = length(PHO_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / PHO_PLAYER$MP[i] *(PHO_PLAYER$`3P`[i] - ((PHO_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((PHO_PLAYER$FT[i]/2) *(2-(sum(PHO_PLAYER$AST[i])))/ (3*sum(PHO_PLAYER$FG))) + (PHO_PLAYER$FG[i] * (2 - (factor * sum(PHO_PLAYER$AST))/sum(PHO_PLAYER$FG))) + (2*PHO_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * PHO_PLAYER$ORB[i] + PHO_PLAYER$BLK[i] - 0.2464 * (PHO_PLAYER$FTA[i] - PHO_PLAYER$FT[i]) - (PHO_PLAYER$FGA[i] - PHO_PLAYER$FG[i]) - PHO_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * PHO_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (PHO_PLAYER$TOV[i] + PHO_PLAYER$ORB[i]) + PHO_PLAYER$STL[i] + PHO_PLAYER$TRB[i] - 0.1936*(PHO_PLAYER$FTA[i] - PHO_PLAYER$FT[i])))
+}
+PHO_PLAYER$uPER = uPER
+```
+NEW ORLEANS PELICANS
+```{r}
+#New Orleans Pelicans uPER
+nloop = length(NOP_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / NOP_PLAYER$MP[i] *(NOP_PLAYER$`3P`[i] - ((NOP_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((NOP_PLAYER$FT[i]/2) *(2-(sum(NOP_PLAYER$AST[i])))/ (3*sum(NOP_PLAYER$FG))) + (NOP_PLAYER$FG[i] * (2 - (factor * sum(NOP_PLAYER$AST))/sum(NOP_PLAYER$FG))) + (2*NOP_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * NOP_PLAYER$ORB[i] + NOP_PLAYER$BLK[i] - 0.2464 * (NOP_PLAYER$FTA[i] - NOP_PLAYER$FT[i]) - (NOP_PLAYER$FGA[i] - NOP_PLAYER$FG[i]) - NOP_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * NOP_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (NOP_PLAYER$TOV[i] + NOP_PLAYER$ORB[i]) + NOP_PLAYER$STL[i] + NOP_PLAYER$TRB[i] - 0.1936*(NOP_PLAYER$FTA[i] - NOP_PLAYER$FT[i])))
+}
+NOP_PLAYER$uPER = uPER
+```
+PORTLAND TRAILBLAZERS
+```{r}
+#Portland Trailblazers uPER
+nloop = length(POR_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / POR_PLAYER$MP[i] *(POR_PLAYER$`3P`[i] - ((POR_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((POR_PLAYER$FT[i]/2) *(2-(sum(POR_PLAYER$AST[i])))/ (3*sum(POR_PLAYER$FG))) + (POR_PLAYER$FG[i] * (2 - (factor * sum(POR_PLAYER$AST))/sum(POR_PLAYER$FG))) + (2*POR_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * POR_PLAYER$ORB[i] + POR_PLAYER$BLK[i] - 0.2464 * (POR_PLAYER$FTA[i] - POR_PLAYER$FT[i]) - (POR_PLAYER$FGA[i] - POR_PLAYER$FG[i]) - POR_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * POR_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (POR_PLAYER$TOV[i] + POR_PLAYER$ORB[i]) + POR_PLAYER$STL[i] + POR_PLAYER$TRB[i] - 0.1936*(POR_PLAYER$FTA[i] - POR_PLAYER$FT[i])))
+}
+POR_PLAYER$uPER = uPER
+```
+SACRAMENTO KINGS
+```{r}
+#Sacramento Kings uPER
+nloop = length(SAC_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / SAC_PLAYER$MP[i] *(SAC_PLAYER$`3P`[i] - ((SAC_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((SAC_PLAYER$FT[i]/2) *(2-(sum(SAC_PLAYER$AST[i])))/ (3*sum(SAC_PLAYER$FG))) + (SAC_PLAYER$FG[i] * (2 - (factor * sum(SAC_PLAYER$AST))/sum(SAC_PLAYER$FG))) + (2*SAC_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * SAC_PLAYER$ORB[i] + SAC_PLAYER$BLK[i] - 0.2464 * (SAC_PLAYER$FTA[i] - SAC_PLAYER$FT[i]) - (SAC_PLAYER$FGA[i] - SAC_PLAYER$FG[i]) - SAC_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * SAC_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (SAC_PLAYER$TOV[i] + SAC_PLAYER$ORB[i]) + SAC_PLAYER$STL[i] + SAC_PLAYER$TRB[i] - 0.1936*(SAC_PLAYER$FTA[i] - SAC_PLAYER$FT[i])))
+}
+SAC_PLAYER$uPER = uPER
+```
+ATLANTA HAWKS
+```{r}
+#Atlanta Hawks uPER
+nloop = length(ATL_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / ATL_PLAYER$MP[i] *(ATL_PLAYER$`3P`[i] - ((ATL_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((ATL_PLAYER$FT[i]/2) *(2-(sum(ATL_PLAYER$AST[i])))/ (3*sum(ATL_PLAYER$FG))) + (ATL_PLAYER$FG[i] * (2 - (factor * sum(ATL_PLAYER$AST))/sum(ATL_PLAYER$FG))) + (2*ATL_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * ATL_PLAYER$ORB[i] + ATL_PLAYER$BLK[i] - 0.2464 * (ATL_PLAYER$FTA[i] - ATL_PLAYER$FT[i]) - (ATL_PLAYER$FGA[i] - ATL_PLAYER$FG[i]) - ATL_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * ATL_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (ATL_PLAYER$TOV[i] + ATL_PLAYER$ORB[i]) + ATL_PLAYER$STL[i] + ATL_PLAYER$TRB[i] - 0.1936*(ATL_PLAYER$FTA[i] - ATL_PLAYER$FT[i])))
+}
+ATL_PLAYER$uPER = uPER
+```
+PHILADELPHIA 76ERS
+```{r}
+#Philadelphia 76ers uPER
+nloop = length(PHI_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / PHI_PLAYER$MP[i] *(PHI_PLAYER$`3P`[i] - ((PHI_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((PHI_PLAYER$FT[i]/2) *(2-(sum(PHI_PLAYER$AST[i])))/ (3*sum(PHI_PLAYER$FG))) + (PHI_PLAYER$FG[i] * (2 - (factor * sum(PHI_PLAYER$AST))/sum(PHI_PLAYER$FG))) + (2*PHI_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * PHI_PLAYER$ORB[i] + PHI_PLAYER$BLK[i] - 0.2464 * (PHI_PLAYER$FTA[i] - PHI_PLAYER$FT[i]) - (PHI_PLAYER$FGA[i] - PHI_PLAYER$FG[i]) - PHI_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * PHI_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (PHI_PLAYER$TOV[i] + PHI_PLAYER$ORB[i]) + PHI_PLAYER$STL[i] + PHI_PLAYER$TRB[i] - 0.1936*(PHI_PLAYER$FTA[i] - PHI_PLAYER$FT[i])))
+}
+PHI_PLAYER$uPER = uPER
+```
+DALLAS MAVERICKS
+```{r}
+#Dallas Mavericks uPER
+nloop = length(DAL_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / DAL_PLAYER$MP[i] *(DAL_PLAYER$`3P`[i] - ((DAL_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((DAL_PLAYER$FT[i]/2) *(2-(sum(DAL_PLAYER$AST[i])))/ (3*sum(DAL_PLAYER$FG))) + (DAL_PLAYER$FG[i] * (2 - (factor * sum(DAL_PLAYER$AST))/sum(DAL_PLAYER$FG))) + (2*DAL_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * DAL_PLAYER$ORB[i] + DAL_PLAYER$BLK[i] - 0.2464 * (DAL_PLAYER$FTA[i] - DAL_PLAYER$FT[i]) - (DAL_PLAYER$FGA[i] - DAL_PLAYER$FG[i]) - DAL_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * DAL_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (DAL_PLAYER$TOV[i] + DAL_PLAYER$ORB[i]) + DAL_PLAYER$STL[i] + DAL_PLAYER$TRB[i] - 0.1936*(DAL_PLAYER$FTA[i] - DAL_PLAYER$FT[i])))
+}
+DAL_PLAYER$uPER = uPER
+```
+BOSTON CELTICS
+```{r}
+#Boston Celtics uPER
+nloop = length(BOS_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / BOS_PLAYER$MP[i] *(BOS_PLAYER$`3P`[i] - ((BOS_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((BOS_PLAYER$FT[i]/2) *(2-(sum(BOS_PLAYER$AST[i])))/ (3*sum(BOS_PLAYER$FG))) + (BOS_PLAYER$FG[i] * (2 - (factor * sum(BOS_PLAYER$AST))/sum(BOS_PLAYER$FG))) + (2*BOS_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * BOS_PLAYER$ORB[i] + BOS_PLAYER$BLK[i] - 0.2464 * (BOS_PLAYER$FTA[i] - BOS_PLAYER$FT[i]) - (BOS_PLAYER$FGA[i] - BOS_PLAYER$FG[i]) - BOS_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * BOS_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (BOS_PLAYER$TOV[i] + BOS_PLAYER$ORB[i]) + BOS_PLAYER$STL[i] + BOS_PLAYER$TRB[i] - 0.1936*(BOS_PLAYER$FTA[i] - BOS_PLAYER$FT[i])))
+}
+BOS_PLAYER$uPER = uPER
+```
+TORONTO RAPTORS
+```{r}
+#Toronto Raptors uPER
+nloop = length(TOR_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / TOR_PLAYER$MP[i] *(TOR_PLAYER$`3P`[i] - ((TOR_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((TOR_PLAYER$FT[i]/2) *(2-(sum(TOR_PLAYER$AST[i])))/ (3*sum(TOR_PLAYER$FG))) + (TOR_PLAYER$FG[i] * (2 - (factor * sum(TOR_PLAYER$AST))/sum(TOR_PLAYER$FG))) + (2*TOR_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * TOR_PLAYER$ORB[i] + TOR_PLAYER$BLK[i] - 0.2464 * (TOR_PLAYER$FTA[i] - TOR_PLAYER$FT[i]) - (TOR_PLAYER$FGA[i] - TOR_PLAYER$FG[i]) - TOR_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * TOR_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (TOR_PLAYER$TOV[i] + TOR_PLAYER$ORB[i]) + TOR_PLAYER$STL[i] + TOR_PLAYER$TRB[i] - 0.1936*(TOR_PLAYER$FTA[i] - TOR_PLAYER$FT[i])))
+}
+TOR_PLAYER$uPER = uPER
+```
+CHARLOTTE HORNETS
+```{r}
+#Charlotte Hornets uPER
+nloop = length(CHO_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / CHO_PLAYER$MP[i] *(CHO_PLAYER$`3P`[i] - ((CHO_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((CHO_PLAYER$FT[i]/2) *(2-(sum(CHO_PLAYER$AST[i])))/ (3*sum(CHO_PLAYER$FG))) + (CHO_PLAYER$FG[i] * (2 - (factor * sum(CHO_PLAYER$AST))/sum(CHO_PLAYER$FG))) + (2*CHO_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * CHO_PLAYER$ORB[i] + CHO_PLAYER$BLK[i] - 0.2464 * (CHO_PLAYER$FTA[i] - CHO_PLAYER$FT[i]) - (CHO_PLAYER$FGA[i] - CHO_PLAYER$FG[i]) - CHO_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * CHO_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (CHO_PLAYER$TOV[i] + CHO_PLAYER$ORB[i]) + CHO_PLAYER$STL[i] + CHO_PLAYER$TRB[i] - 0.1936*(CHO_PLAYER$FTA[i] - CHO_PLAYER$FT[i])))
+}
+CHO_PLAYER$uPER = uPER
+```
+CHICAGO BULLS
+```{r}
+#Chicago Bulls uPER
+nloop = length(CHI_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / CHI_PLAYER$MP[i] *(CHI_PLAYER$`3P`[i] - ((CHI_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((CHI_PLAYER$FT[i]/2) *(2-(sum(CHI_PLAYER$AST[i])))/ (3*sum(CHI_PLAYER$FG))) + (CHI_PLAYER$FG[i] * (2 - (factor * sum(CHI_PLAYER$AST))/sum(CHI_PLAYER$FG))) + (2*CHI_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * CHI_PLAYER$ORB[i] + CHI_PLAYER$BLK[i] - 0.2464 * (CHI_PLAYER$FTA[i] - CHI_PLAYER$FT[i]) - (CHI_PLAYER$FGA[i] - CHI_PLAYER$FG[i]) - CHI_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * CHI_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (CHI_PLAYER$TOV[i] + CHI_PLAYER$ORB[i]) + CHI_PLAYER$STL[i] + CHI_PLAYER$TRB[i] - 0.1936*(CHI_PLAYER$FTA[i] - CHI_PLAYER$FT[i])))
+}
+CHI_PLAYER$uPER = uPER
+```
+LA LAKERS
+```{r}
+#LA Lakers uPER
+nloop = length(LAL_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / LAL_PLAYER$MP[i] *(LAL_PLAYER$`3P`[i] - ((LAL_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((LAL_PLAYER$FT[i]/2) *(2-(sum(LAL_PLAYER$AST[i])))/ (3*sum(LAL_PLAYER$FG))) + (LAL_PLAYER$FG[i] * (2 - (factor * sum(LAL_PLAYER$AST))/sum(LAL_PLAYER$FG))) + (2*LAL_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * LAL_PLAYER$ORB[i] + LAL_PLAYER$BLK[i] - 0.2464 * (LAL_PLAYER$FTA[i] - LAL_PLAYER$FT[i]) - (LAL_PLAYER$FGA[i] - LAL_PLAYER$FG[i]) - LAL_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * LAL_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (LAL_PLAYER$TOV[i] + LAL_PLAYER$ORB[i]) + LAL_PLAYER$STL[i] + LAL_PLAYER$TRB[i] - 0.1936*(LAL_PLAYER$FTA[i] - LAL_PLAYER$FT[i])))
+}
+LAL_PLAYER$uPER = uPER
+```
+INDIANAPOLIS PACERS
+```{r}
+#Indianapolis Pacers uPER
+nloop = length(IND_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / IND_PLAYER$MP[i] *(IND_PLAYER$`3P`[i] - ((IND_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((IND_PLAYER$FT[i]/2) *(2-(sum(IND_PLAYER$AST[i])))/ (3*sum(IND_PLAYER$FG))) + (IND_PLAYER$FG[i] * (2 - (factor * sum(IND_PLAYER$AST))/sum(IND_PLAYER$FG))) + (2*IND_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * IND_PLAYER$ORB[i] + IND_PLAYER$BLK[i] - 0.2464 * (IND_PLAYER$FTA[i] - IND_PLAYER$FT[i]) - (IND_PLAYER$FGA[i] - IND_PLAYER$FG[i]) - IND_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * IND_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (IND_PLAYER$TOV[i] + IND_PLAYER$ORB[i]) + IND_PLAYER$STL[i] + IND_PLAYER$TRB[i] - 0.1936*(IND_PLAYER$FTA[i] - IND_PLAYER$FT[i])))
+}
+IND_PLAYER$uPER = uPER
+```
+MEMPHIS GRIZZLIES
+```{r}
+#Memphis Grizzlies uPER
+nloop = length(MEM_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / MEM_PLAYER$MP[i] *(MEM_PLAYER$`3P`[i] - ((MEM_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((MEM_PLAYER$FT[i]/2) *(2-(sum(MEM_PLAYER$AST[i])))/ (3*sum(MEM_PLAYER$FG))) + (MEM_PLAYER$FG[i] * (2 - (factor * sum(MEM_PLAYER$AST))/sum(MEM_PLAYER$FG))) + (2*MEM_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * MEM_PLAYER$ORB[i] + MEM_PLAYER$BLK[i] - 0.2464 * (MEM_PLAYER$FTA[i] - MEM_PLAYER$FT[i]) - (MEM_PLAYER$FGA[i] - MEM_PLAYER$FG[i]) - MEM_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * MEM_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (MEM_PLAYER$TOV[i] + MEM_PLAYER$ORB[i]) + MEM_PLAYER$STL[i] + MEM_PLAYER$TRB[i] - 0.1936*(MEM_PLAYER$FTA[i] - MEM_PLAYER$FT[i])))
+}
+MEM_PLAYER$uPER = uPER
+```
+SAN ANTONIO SPURS
+```{r}
+#San Antonio Spurs uPER
+nloop = length(SAS_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / SAS_PLAYER$MP[i] *(SAS_PLAYER$`3P`[i] - ((SAS_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((SAS_PLAYER$FT[i]/2) *(2-(sum(SAS_PLAYER$AST[i])))/ (3*sum(SAS_PLAYER$FG))) + (SAS_PLAYER$FG[i] * (2 - (factor * sum(SAS_PLAYER$AST))/sum(SAS_PLAYER$FG))) + (2*SAS_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * SAS_PLAYER$ORB[i] + SAS_PLAYER$BLK[i] - 0.2464 * (SAS_PLAYER$FTA[i] - SAS_PLAYER$FT[i]) - (SAS_PLAYER$FGA[i] - SAS_PLAYER$FG[i]) - SAS_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * SAS_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (SAS_PLAYER$TOV[i] + SAS_PLAYER$ORB[i]) + SAS_PLAYER$STL[i] + SAS_PLAYER$TRB[i] - 0.1936*(SAS_PLAYER$FTA[i] - SAS_PLAYER$FT[i])))
+}
+SAS_PLAYER$uPER = uPER
+```
+WASHINGTON WIZARDS
+```{r}
+#Washington Wizards uPER
+nloop = length(WAS_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / WAS_PLAYER$MP[i] *(WAS_PLAYER$`3P`[i] - ((WAS_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((WAS_PLAYER$FT[i]/2) *(2-(sum(WAS_PLAYER$AST[i])))/ (3*sum(WAS_PLAYER$FG))) + (WAS_PLAYER$FG[i] * (2 - (factor * sum(WAS_PLAYER$AST))/sum(WAS_PLAYER$FG))) + (2*WAS_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * WAS_PLAYER$ORB[i] + WAS_PLAYER$BLK[i] - 0.2464 * (WAS_PLAYER$FTA[i] - WAS_PLAYER$FT[i]) - (WAS_PLAYER$FGA[i] - WAS_PLAYER$FG[i]) - WAS_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * WAS_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (WAS_PLAYER$TOV[i] + WAS_PLAYER$ORB[i]) + WAS_PLAYER$STL[i] + WAS_PLAYER$TRB[i] - 0.1936*(WAS_PLAYER$FTA[i] - WAS_PLAYER$FT[i])))
+}
+WAS_PLAYER$uPER = uPER
+```
+GOLDEN STATE WARRIORS
+```{r}
+#Golden State Warriors uPER
+nloop = length(GSW_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / GSW_PLAYER$MP[i] *(GSW_PLAYER$`3P`[i] - ((GSW_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((GSW_PLAYER$FT[i]/2) *(2-(sum(GSW_PLAYER$AST[i])))/ (3*sum(GSW_PLAYER$FG))) + (GSW_PLAYER$FG[i] * (2 - (factor * sum(GSW_PLAYER$AST))/sum(GSW_PLAYER$FG))) + (2*GSW_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * GSW_PLAYER$ORB[i] + GSW_PLAYER$BLK[i] - 0.2464 * (GSW_PLAYER$FTA[i] - GSW_PLAYER$FT[i]) - (GSW_PLAYER$FGA[i] - GSW_PLAYER$FG[i]) - GSW_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * GSW_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (GSW_PLAYER$TOV[i] + GSW_PLAYER$ORB[i]) + GSW_PLAYER$STL[i] + GSW_PLAYER$TRB[i] - 0.1936*(GSW_PLAYER$FTA[i] - GSW_PLAYER$FT[i])))
+}
+GSW_PLAYER$uPER = uPER
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/GSW_TEAM$PACE) * 15/league_uPER
+GSW_PLAYER$PER = PER
+#team PER
+TER_GSW = 0
+TER_GSW = sum(GSW_PLAYER$MP*GSW_PLAYER$PER)/(410*(48+(5*GSW_TEAM$`Total OTs`/82))) 
+```
+NEW YORK KNICKS
+```{r}
+#New York Knicks uPER
+nloop = length(NYK_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / NYK_PLAYER$MP[i] *(NYK_PLAYER$`3P`[i] - ((NYK_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((NYK_PLAYER$FT[i]/2) *(2-(sum(NYK_PLAYER$AST[i])))/ (3*sum(NYK_PLAYER$FG))) + (NYK_PLAYER$FG[i] * (2 - (factor * sum(NYK_PLAYER$AST))/sum(NYK_PLAYER$FG))) + (2*NYK_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * NYK_PLAYER$ORB[i] + NYK_PLAYER$BLK[i] - 0.2464 * (NYK_PLAYER$FTA[i] - NYK_PLAYER$FT[i]) - (NYK_PLAYER$FGA[i] - NYK_PLAYER$FG[i]) - NYK_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * NYK_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (NYK_PLAYER$TOV[i] + NYK_PLAYER$ORB[i]) + NYK_PLAYER$STL[i] + NYK_PLAYER$TRB[i] - 0.1936*(NYK_PLAYER$FTA[i] - NYK_PLAYER$FT[i])))
+}
+NYK_PLAYER$uPER = uPER
+```
+MIAMI HEAT
+```{r}
+#Miami Heat uPER
+nloop = length(MIA_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / MIA_PLAYER$MP[i] *(MIA_PLAYER$`3P`[i] - ((MIA_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((MIA_PLAYER$FT[i]/2) *(2-(sum(MIA_PLAYER$AST[i])))/ (3*sum(MIA_PLAYER$FG))) + (MIA_PLAYER$FG[i] * (2 - (factor * sum(MIA_PLAYER$AST))/sum(MIA_PLAYER$FG))) + (2*MIA_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * MIA_PLAYER$ORB[i] + MIA_PLAYER$BLK[i] - 0.2464 * (MIA_PLAYER$FTA[i] - MIA_PLAYER$FT[i]) - (MIA_PLAYER$FGA[i] - MIA_PLAYER$FG[i]) - MIA_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * MIA_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (MIA_PLAYER$TOV[i] + MIA_PLAYER$ORB[i]) + MIA_PLAYER$STL[i] + MIA_PLAYER$TRB[i] - 0.1936*(MIA_PLAYER$FTA[i] - MIA_PLAYER$FT[i])))
+}
+MIA_PLAYER$uPER = uPER
+```
+DETROIT PISTONS
+```{r}
+#Detroit Pistons uPER
+nloop = length(DET_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / DET_PLAYER$MP[i] *(DET_PLAYER$`3P`[i] - ((DET_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((DET_PLAYER$FT[i]/2) *(2-(sum(DET_PLAYER$AST[i])))/ (3*sum(DET_PLAYER$FG))) + (DET_PLAYER$FG[i] * (2 - (factor * sum(DET_PLAYER$AST))/sum(DET_PLAYER$FG))) + (2*DET_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * DET_PLAYER$ORB[i] + DET_PLAYER$BLK[i] - 0.2464 * (DET_PLAYER$FTA[i] - DET_PLAYER$FT[i]) - (DET_PLAYER$FGA[i] - DET_PLAYER$FG[i]) - DET_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * DET_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (DET_PLAYER$TOV[i] + DET_PLAYER$ORB[i]) + DET_PLAYER$STL[i] + DET_PLAYER$TRB[i] - 0.1936*(DET_PLAYER$FTA[i] - DET_PLAYER$FT[i])))
+}
+DET_PLAYER$uPER = uPER
+```
+MINNESOTA TIMBERWOLVES
+```{r}
+#Minnesota Timberwolves uPER
+nloop = length(MIN_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / MIN_PLAYER$MP[i] *(MIN_PLAYER$`3P`[i] - ((MIN_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((MIN_PLAYER$FT[i]/2) *(2-(sum(MIN_PLAYER$AST[i])))/ (3*sum(MIN_PLAYER$FG))) + (MIN_PLAYER$FG[i] * (2 - (factor * sum(MIN_PLAYER$AST))/sum(MIN_PLAYER$FG))) + (2*MIN_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * MIN_PLAYER$ORB[i] + MIN_PLAYER$BLK[i] - 0.2464 * (MIN_PLAYER$FTA[i] - MIN_PLAYER$FT[i]) - (MIN_PLAYER$FGA[i] - MIN_PLAYER$FG[i]) - MIN_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * MIN_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (MIN_PLAYER$TOV[i] + MIN_PLAYER$ORB[i]) + MIN_PLAYER$STL[i] + MIN_PLAYER$TRB[i] - 0.1936*(MIN_PLAYER$FTA[i] - MIN_PLAYER$FT[i])))
+}
+MIN_PLAYER$uPER = uPER
+```
+OKC THUNDER
+```{r}
+#OKC Thunder uPER
+nloop = length(OKC_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / OKC_PLAYER$MP[i] *(OKC_PLAYER$`3P`[i] - ((OKC_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((OKC_PLAYER$FT[i]/2) *(2-(sum(OKC_PLAYER$AST[i])))/ (3*sum(OKC_PLAYER$FG))) + (OKC_PLAYER$FG[i] * (2 - (factor * sum(OKC_PLAYER$AST))/sum(OKC_PLAYER$FG))) + (2*OKC_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * OKC_PLAYER$ORB[i] + OKC_PLAYER$BLK[i] - 0.2464 * (OKC_PLAYER$FTA[i] - OKC_PLAYER$FT[i]) - (OKC_PLAYER$FGA[i] - OKC_PLAYER$FG[i]) - OKC_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * OKC_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (OKC_PLAYER$TOV[i] + OKC_PLAYER$ORB[i]) + OKC_PLAYER$STL[i] + OKC_PLAYER$TRB[i] - 0.1936*(OKC_PLAYER$FTA[i] - OKC_PLAYER$FT[i])))
+}
+OKC_PLAYER$uPER = uPER
+```
+ORLANDO MAGIC
+```{r}
+#Orlando Magic uPER
+nloop = length(ORL_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / ORL_PLAYER$MP[i] *(ORL_PLAYER$`3P`[i] - ((ORL_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((ORL_PLAYER$FT[i]/2) *(2-(sum(ORL_PLAYER$AST[i])))/ (3*sum(ORL_PLAYER$FG))) + (ORL_PLAYER$FG[i] * (2 - (factor * sum(ORL_PLAYER$AST))/sum(ORL_PLAYER$FG))) + (2*ORL_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * ORL_PLAYER$ORB[i] + ORL_PLAYER$BLK[i] - 0.2464 * (ORL_PLAYER$FTA[i] - ORL_PLAYER$FT[i]) - (ORL_PLAYER$FGA[i] - ORL_PLAYER$FG[i]) - ORL_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * ORL_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (ORL_PLAYER$TOV[i] + ORL_PLAYER$ORB[i]) + ORL_PLAYER$STL[i] + ORL_PLAYER$TRB[i] - 0.1936*(ORL_PLAYER$FTA[i] - ORL_PLAYER$FT[i])))
+}
+ORL_PLAYER$uPER = uPER
+```
+HOUSTON ROCKETS
+```{r}
+#Houston Rockets uPER
+nloop = length(HOU_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / HOU_PLAYER$MP[i] *(HOU_PLAYER$`3P`[i] - ((HOU_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((HOU_PLAYER$FT[i]/2) *(2-(sum(HOU_PLAYER$AST[i])))/ (3*sum(HOU_PLAYER$FG))) + (HOU_PLAYER$FG[i] * (2 - (factor * sum(HOU_PLAYER$AST))/sum(HOU_PLAYER$FG))) + (2*HOU_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * HOU_PLAYER$ORB[i] + HOU_PLAYER$BLK[i] - 0.2464 * (HOU_PLAYER$FTA[i] - HOU_PLAYER$FT[i]) - (HOU_PLAYER$FGA[i] - HOU_PLAYER$FG[i]) - HOU_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * HOU_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (HOU_PLAYER$TOV[i] + HOU_PLAYER$ORB[i]) + HOU_PLAYER$STL[i] + HOU_PLAYER$TRB[i] - 0.1936*(HOU_PLAYER$FTA[i] - HOU_PLAYER$FT[i])))
+}
+HOU_PLAYER$uPER = uPER
+```
+CLEVELAND CAVALIERS
+```{r}
+#Cleveland Cavaliers uPER
+nloop = length(CLE_PLAYER$Player)
+uPER = 1:nloop
+for(i in 1:nloop) {
+  uPER[i] = uPER[i] =  1 / CLE_PLAYER$MP[i] *(CLE_PLAYER$`3P`[i] - ((CLE_PLAYER$PF[i] * sum(Players_Stats_2018_2019_NBA_no_PER$FT)) / sum(Players_Stats_2018_2019_NBA_no_PER$PF)) + ((CLE_PLAYER$FT[i]/2) *(2-(sum(CLE_PLAYER$AST[i])))/ (3*sum(CLE_PLAYER$FG))) + (CLE_PLAYER$FG[i] * (2 - (factor * sum(CLE_PLAYER$AST))/sum(CLE_PLAYER$FG))) + (2*CLE_PLAYER$AST[i])/3 + VOP *(DRBP * (2 * CLE_PLAYER$ORB[i] + CLE_PLAYER$BLK[i] - 0.2464 * (CLE_PLAYER$FTA[i] - CLE_PLAYER$FT[i]) - (CLE_PLAYER$FGA[i] - CLE_PLAYER$FG[i]) - CLE_PLAYER$TRB[i]) +(0.44 * sum(Players_Stats_2018_2019_NBA_no_PER$FTA) * CLE_PLAYER$PF[i]) / sum(Players_Stats_2018_2019_NBA_no_PER$PF) - (CLE_PLAYER$TOV[i] + CLE_PLAYER$ORB[i]) + CLE_PLAYER$STL[i] + CLE_PLAYER$TRB[i] - 0.1936*(CLE_PLAYER$FTA[i] - CLE_PLAYER$FT[i])))
+}
+CLE_PLAYER$uPER = uPER
+```
+PER
+```{r}
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/BRK_TEAM$PACE) * 15/league_uPER
+BRK_PLAYER$PER = PER
+#team PER
+TER_BRK = 0
+TER_BRK = sum(BRK_PLAYER$MP*BRK_PLAYER$PER)/(410*(48+(5*BRK_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/LAC_TEAM$PACE) * 15/league_uPER
+LAC_PLAYER$PER = PER
+#team PER
+TER_LAC = 0
+TER_LAC = sum(LAC_PLAYER$MP*LAC_PLAYER$PER)/(410*(48+(5*LAC_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/UTA_TEAM$PACE) * 15/league_uPER
+UTA_PLAYER$PER = PER
+#team PER
+TER_UTA = 0
+TER_UTA = sum(UTA_PLAYER$MP*UTA_PLAYER$PER)/(410*(48+(5*UTA_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/MIL_TEAM$PACE) * 15/league_uPER
+MIL_PLAYER$PER = PER
+#team PER
+TER_MIL = 0
+TER_MIL = sum(MIL_PLAYER$MP*MIL_PLAYER$PER)/(410*(48+(5*MIL_TEAM$`Total OTs`/82)))
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/DEN_TEAM$PACE) * 15/league_uPER
+DEN_PLAYER$PER = PER
+#team PER
+TER_DEN = 0
+TER_DEN = sum(DEN_PLAYER$MP*DEN_PLAYER$PER)/(410*(48+(5*DEN_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/PHO_TEAM$PACE) * 15/league_uPER
+PHO_PLAYER$PER = PER
+#team PER
+TER_PHO = 0
+TER_PHO = sum(PHO_PLAYER$MP*PHO_PLAYER$PER)/(410*(48+(5*PHO_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/NOP_TEAM$PACE) * 15/league_uPER
+NOP_PLAYER$PER = PER
+#team PER
+TER_NOP = 0
+TER_NOP = sum(NOP_PLAYER$MP*NOP_PLAYER$PER)/(410*(48+(5*NOP_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/POR_TEAM$PACE) * 15/league_uPER
+POR_PLAYER$PER = PER
+#team PER
+TER_POR = 0
+TER_POR = sum(POR_PLAYER$MP*POR_PLAYER$PER)/(410*(48+(5*POR_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/SAC_TEAM$PACE) * 15/league_uPER
+SAC_PLAYER$PER = PER
+#team PER
+TER_SAC = 0
+TER_SAC = sum(SAC_PLAYER$MP*SAC_PLAYER$PER)/(410*(48+(5*SAC_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/ATL_TEAM$PACE) * 15/league_uPER
+ATL_PLAYER$PER = PER
+#team PER
+TER_ATL = 0
+TER_ATL = sum(ATL_PLAYER$MP*ATL_PLAYER$PER)/(410*(48+(5*ATL_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/CLE_TEAM$PACE) * 15/league_uPER
+CLE_PLAYER$PER = PER
+#team PER
+TER_CLE = 0
+TER_CLE = sum(CLE_PLAYER$MP*CLE_PLAYER$PER)/(410*(48+(5*CLE_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/PHI_TEAM$PACE) * 15/league_uPER
+PHI_PLAYER$PER = PER
+#team PER
+TER_PHI = 0
+TER_PHI = sum(PHI_PLAYER$MP*PHI_PLAYER$PER)/(410*(48+(5*PHI_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/DAL_TEAM$PACE) * 15/league_uPER
+DAL_PLAYER$PER = PER
+#team PER
+TER_DAL = 0
+TER_DAL = sum(DAL_PLAYER$MP*DAL_PLAYER$PER)/(410*(48+(5*DAL_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/BOS_TEAM$PACE) * 15/league_uPER
+BOS_PLAYER$PER = PER
+#team PER
+TER_BOS = 0
+TER_BOS = sum(BOS_PLAYER$MP*BOS_PLAYER$PER)/(410*(48+(5*BOS_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/TOR_TEAM$PACE) * 15/league_uPER
+TOR_PLAYER$PER = PER
+#team PER
+TER_TOR = 0
+TER_TOR = sum(TOR_PLAYER$MP*TOR_PLAYER$PER)/(410*(48+(5*TOR_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/CHI_TEAM$PACE) * 15/league_uPER
+CHI_PLAYER$PER = PER
+#team PER
+TER_CHI = 0
+TER_CHI = sum(CHI_PLAYER$MP*CHI_PLAYER$PER)/(410*(48+(5*CHI_TEAM$`Total OTs`/82)))
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/CHO_TEAM$PACE) * 15/league_uPER
+CHO_PLAYER$PER = PER
+#team PER
+TER_CHO = 0
+TER_CHO = sum(CHO_PLAYER$MP*CHO_PLAYER$PER)/(410*(48+(5*CHO_TEAM$`Total OTs`/82)))
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/LAL_TEAM$PACE) * 15/league_uPER
+LAL_PLAYER$PER = PER
+#team PER
+TER_LAL = 0
+TER_LAL = sum(LAL_PLAYER$MP*LAL_PLAYER$PER)/(410*(48+(5*LAL_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/IND_TEAM$PACE) * 15/league_uPER
+IND_PLAYER$PER = PER
+#team PER
+TER_IND = 0
+TER_IND = sum(IND_PLAYER$MP*IND_PLAYER$PER)/(410*(48+(5*IND_TEAM$`Total OTs`/82)))
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/MEM_TEAM$PACE) * 15/league_uPER
+MEM_PLAYER$PER = PER
+#team PER
+TER_MEM = 0
+TER_MEM = sum(MEM_PLAYER$MP*MEM_PLAYER$PER)/(410*(48+(5*MEM_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/SAS_TEAM$PACE) * 15/league_uPER
+SAS_PLAYER$PER = PER
+#team PER
+TER_SAS = 0
+TER_SAS = sum(SAS_PLAYER$MP*SAS_PLAYER$PER)/(410*(48+(5*SAS_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/WAS_TEAM$PACE) * 15/league_uPER
+WAS_PLAYER$PER = PER
+#team PER
+TER_WAS = 0
+TER_WAS = sum(WAS_PLAYER$MP*WAS_PLAYER$PER)/(410*(48+(5*WAS_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/NYK_TEAM$PACE) * 15/league_uPER
+NYK_PLAYER$PER = PER
+#team PER
+TER_NYK = 0
+TER_NYK = sum(NYK_PLAYER$MP*NYK_PLAYER$PER)/(410*(48+(5*NYK_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/MIA_TEAM$PACE) * 15/league_uPER
+MIA_PLAYER$PER = PER
+#team PER
+TER_MIA = 0
+TER_MIA = sum(MIA_PLAYER$MP*MIA_PLAYER$PER)/(410*(48+(5*MIA_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/DET_TEAM$PACE) * 15/league_uPER
+DET_PLAYER$PER = PER
+#team PER
+TER_DET = 0
+TER_DET = sum(DET_PLAYER$MP*DET_PLAYER$PER)/(410*(48+(5*DET_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/MIN_TEAM$PACE) * 15/league_uPER
+MIN_PLAYER$PER = PER
+#team PER
+TER_MIN = 0
+TER_MIN = sum(MIN_PLAYER$MP*MIN_PLAYER$PER)/(410*(48+(5*MIN_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/OKC_TEAM$PACE) * 15/league_uPER
+OKC_PLAYER$PER = PER
+#team PER
+TER_OKC = 0
+TER_OKC = sum(OKC_PLAYER$MP*OKC_PLAYER$PER)/(410*(48+(5*OKC_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/ORL_TEAM$PACE) * 15/league_uPER
+ORL_PLAYER$PER = PER
+#team PER
+TER_ORL = 0
+TER_ORL = sum(ORL_PLAYER$MP*ORL_PLAYER$PER)/(410*(48+(5*ORL_TEAM$`Total OTs`/82))) 
+PER = (uPER * mean(Team_Efficiency_2018_2019$PACE)/HOU_TEAM$PACE) * 15/league_uPER
+HOU_PLAYER$PER = PER
+#team PER
+TER_HOU = 0
+TER_HOU = sum(HOU_PLAYER$MP*HOU_PLAYER$PER)/(410*(48+(5*HOU_TEAM$`Total OTs`/82))) 
+```
+league PER
+```{r}
+league_uPER = (sum(BRK_PLAYER$uPER) + sum(LAC_PLAYER$uPER) + sum(UTA_PLAYER$uPER) + sum(MIL_PLAYER$uPER) + sum(DEN_PLAYER$uPER) + sum(PHO_PLAYER$uPER)+ sum(NOP_PLAYER$uPER)+ sum(POR_PLAYER$uPER)+ sum(SAC_PLAYER$uPER)+ sum(ATL_PLAYER$uPER)+ sum(PHI_PLAYER$uPER)+ sum(DAL_PLAYER$uPER)+ sum(BOS_PLAYER$uPER)+ sum(TOR_PLAYER$uPER)+ sum(CHO_PLAYER$uPER)+ sum(CHI_PLAYER$uPER)+ sum(LAL_PLAYER$uPER)+ sum(IND_PLAYER$uPER)+ sum(MEM_PLAYER$uPER)+ sum(SAS_PLAYER$uPER)+ sum(WAS_PLAYER$uPER)+ sum(GSW_PLAYER$uPER)+ sum(NYK_PLAYER$uPER)+ sum(MIA_PLAYER$uPER)+ sum(DET_PLAYER$uPER)+ sum(MIN_PLAYER$uPER)+ sum(OKC_PLAYER$uPER)+ sum(ORL_PLAYER$uPER)+ sum(HOU_PLAYER$uPER)+ sum(CLE_PLAYER$uPER))/622
+```
+TER using PER 2018-2019
+```{r}
+Diff_2008_2020 <- read_xlsx("Diff20082020.xlsx")
+Diff_2018_2019 <- filter(Diff_2008_2020, Year == "2018-2019")
+TER <- c(TER_BRK, TER_LAC, TER_UTA, TER_MIL, TER_DEN, TER_PHO, TER_NOP, TER_POR, TER_SAC, TER_ATL, TER_PHI, TER_DAL, TER_BOS, TER_TOR, TER_CHO, TER_CHI, TER_LAL, TER_IND, TER_MEM, TER_SAS, TER_WAS, TER_GSW, TER_NYK, TER_MIA, TER_DET, TER_MIN, TER_OKC, TER_ORL, TER_HOU, TER_CLE)
+Team_Efficiency_2018_2019$TER <- TER
+lmWinsTER = lm(Wins ~ TER, data = Team_Efficiency_2018_2019)
+plot(Team_Efficiency_2018_2019$TER, Team_Efficiency_2018_2019$Wins)
+abline(lmWinsTER)
+summary(lmWinsTER)
+lmOFFTER = lm(`OFF EFF` ~ TER, data = Team_Efficiency_2018_2019)
+plot(Team_Efficiency_2018_2019$TER, Team_Efficiency_2018_2019$`OFF EFF`)
+abline(lmOFFTER)
+summary(lmOFFTER)
+lmDEFTER = lm(`DEF EFF` ~ TER, data = Team_Efficiency_2018_2019)
+plot(Team_Efficiency_2018_2019$TER, Team_Efficiency_2018_2019$`DEF EFF`)
+abline(lmDEFTER)
+summary(lmDEFTER)
+lmTERPlayoffWins <- lm(Diff_2018_2019$`Playoff Wins` ~ Team_Efficiency_2018_2019$TER)
+plot(Diff_2018_2019$`Playoff Wins`,Team_Efficiency_2018_2019$TER)
+abline(lmTERPlayoffWins)
+summary(lmTERPlayoffWins)
+```
+TER MLR using 2008-2020 team data
+```{r}
+lmWinsTeamStats <- lm(Wins ~ AST + TO + ORR + DRR + REBR + `EFF FG%` + `OFF EFF` + `DEF EFF` + `TS%`, data = Team_Efficiency_2008_2020)
+lmWinsPACE <- lm(Win_Percentage ~ PACE, data = Team_Efficiency_2008_2020)
+plot(Team_Efficiency_2008_2020$PACE, Team_Efficiency_2008_2020$Win_Percentage)
+abline(lmWinsPACE)
+summary(lmWinsPACE)
+#Rsq = .001
+
+lmWinsAssists <- lm(Win_Percentage ~ AST, data = Team_Efficiency_2008_2020)
+plot(Team_Efficiency_2008_2020$AST, Team_Efficiency_2008_2020$Win_Percentage)
+abline(lmWinsAssists)
+summary(lmWinsAssists)
+#Rsq = .09
+
+lmWinsORR <- lm(Win_Percentage ~ ORR, data = Team_Efficiency_2008_2020)
+plot(Team_Efficiency_2008_2020$ORR, Team_Efficiency_2008_2020$Win_Percentage)
+abline(lmWinsORR)
+summary(lmWinsORR)
+#Rsq = -.001
+
+lmWinsDRR <- lm(Win_Percentage ~ DRR, data = Team_Efficiency_2008_2020)
+plot(Team_Efficiency_2008_2020$DRR, Team_Efficiency_2008_2020$Win_Percentage)
+abline(lmWinsDRR)
+summary(lmWinsDRR)
+#Rsq = .05
+
+lmWinsREBR <- lm(Win_Percentage ~ REBR, data = Team_Efficiency_2008_2020)
+plot(Team_Efficiency_2008_2020$REBR, Team_Efficiency_2008_2020$Win_Percentage)
+abline(lmWinsREBR)
+summary(lmWinsREBR)
+#Rsq = .26
+
+lmWinsEffP <- lm(Win_Percentage ~ `EFF FG%`, data = Team_Efficiency_2008_2020)
+plot(Team_Efficiency_2008_2020$`EFF FG%`, Team_Efficiency_2008_2020$Win_Percentage)
+abline(lmWinsEffP)
+summary(lmWinsEffP)
+#Rsq = .36
+
+lmWinsTSP <- lm(Win_Percentage ~ `TS%`, data = Team_Efficiency_2008_2020)
+plot(Team_Efficiency_2008_2020$`TS%`, Team_Efficiency_2008_2020$Win_Percentage)
+abline(lmWinsTSP)
+summary(lmWinsTSP)
+#Rsq = .4
+
+lmWinsOFF <- lm(Win_Percentage ~ `OFF EFF`, data = Team_Efficiency_2008_2020)
+plot(Team_Efficiency_2008_2020$`OFF EFF`, Team_Efficiency_2008_2020$Win_Percentage)
+abline(lmWinsOFF)
+summary(lmWinsOFF)
+#Rsq = .49
+
+
+
+lmWinsDEF <- lm(Win_Percentage ~ `DEF EFF`, data = Team_Efficiency_2008_2020)
+plot(Team_Efficiency_2008_2020$`DEF EFF`, Team_Efficiency_2008_2020$Win_Percentage)
+abline(lmWinsDEF)
+summary(lmWinsDEF)
+#Rsq = .43
+
+lmWinsDiff <- lm(Win_Percentage ~ Point_Diff, data = Team_Efficiency_2008_2020)
+plot(Team_Efficiency_2008_2020$Point_Diff, Team_Efficiency_2008_2020$Win_Percentage, xlab = "Offensive Defensive Efficiency Difference", ylab = "Win %")
+abline(lmWinsDiff)
+summary(lmWinsDiff)
+#Rsq = .94
+
+lmWinsAST_TO <- lm(Win_Percentage ~ AST_TO_ratio, data = Team_Efficiency_2012_2020)
+plot(Team_Efficiency_2012_2020$AST_TO_ratio, Team_Efficiency_2012_2020$Win_Percentage)
+abline(lmWinsAST_TO)
+summary(lmWinsAST_TO)
+#Rsq = .15
+```
+```{r}
+lmWinsTeamStats1 <- lm(Wins ~ PACE + AST + ORR + DRR + REBR + `TS%`, data = Team_Efficiency_2008_2020)
+summary(lmWinsTeamStats1)
+lmWinsTeamStats2 <- lm(Wins ~ `OFF EFF` + `DEF EFF`, data = Team_Efficiency_2008_2020)
+summary(lmWinsTeamStats2)
+```
+PCA
+```{r}
+Team_Efficiency_2018_2019.pca <- prcomp(Team_Efficiency_2018_2019[,c(2:11, 15)], center = TRUE,scale = TRUE)
+summary(Team_Efficiency_2018_2019.pca)
+str(Team_Efficiency_2018_2019.pca)
+ggbiplot(Team_Efficiency_2018_2019.pca, labels=Team_Efficiency_2018_2019$TEAM)
+Team_Efficiency_2008_2020.pca <- prcomp(Team_Efficiency_2008_2020[,c(2:11)], center = T,scale = T)
+summary(Team_Efficiency_2008_2020.pca)
+ggbiplot(Team_Efficiency_2008_2020.pca)
+Diff_2008_2020.pca <- prcomp(Diff_2008_2020[,c(3:20)], center=TRUE,scale =TRUE)
+summary(Diff_2008_2020.pca)
+str(Diff_2008_2020.pca)
+ggbiplot(Diff_2008_2020.pca)
+```
+More Regression
+```{r}
+STL_2018_2019 <- tapply(Players_Stats_2018_2019_NBA_no_PER$STL, Players_Stats_2018_2019_NBA_no_PER$Tm, FUN=sum)
+STL_2018_2019 <- round(STL_2018_2019/82, 1)
+STL_2018_2019 <- c(7.6,8.5,7.7,6.7,6.1,8.3,7.4,8.6,7.7,6.8,8.1,7.4,8.3,8.3,7.2,8.3,9.3,8.7,6.6,6.5,6.6,6.9,8.2,7.5,6.5,7.6,8.3,8.9,7.4,6.8)
+Team_Efficiency_2018_2019$SPG <- STL_2018_2019
+lmWinsSTL <- lm(Wins ~ SPG, data = Team_Efficiency_2018_2019)
+plot(Team_Efficiency_2018_2019$SPG, Team_Efficiency_2018_2019$Wins)
+abline(lmWinsSTL)
+summary(lmWinsSTL)
+BLK_2018_2019 <- tapply(Players_Stats_2018_2019_NBA_no_PER$BLK, Players_Stats_2018_2019_NBA_no_PER$Tm, FUN=sum)
+BLK_2018_2019 <- round(BLK_2018_2019/82, 1)
+BLK_2018_2019 <- c(6.4,4.9,6.0,5.0,4.7,5.3,5.3,5.3,4.4,5.2,5.9,5.4,4.6,5.0,4.9,4.4,5.2,4.9,4.1,4.3,5.4,4.0,5.1,5.2,2.4,5.5,5.5,5.1,4.3,5.1)
+Team_Efficiency_2018_2019$BPG <- BLK_2018_2019
+lmWinsBLK <- lm(Wins ~ BPG, data = Team_Efficiency_2018_2019)
+plot(Team_Efficiency_2018_2019$BPG, Team_Efficiency_2018_2019$Wins)
+abline(lmWinsBLK)
+summary(lmWinsBLK)
+```
+Differential Regression
+```{r}
+Diff_2008_2020 <- read_xlsx("Diff20082020.xlsx")
+lmWinsFGdiff <- lm(`Win%` ~ `FG%`, data = Diff_2008_2020)
+plot(Diff_2008_2020$`FG%`, Diff_2008_2020$`Win%`)
+abline(lmWinsFGdiff)
+summary(lmWinsFGdiff)
+#Rsq=.71
+
+Diff_2008_2020 <- read_xlsx("Diff20082020.xlsx")
+lmWinsFGMdiff <- lm(`Win%` ~ FGM, data = Diff_2008_2020)
+plot(Diff_2008_2020$FGM, Diff_2008_2020$`Win%`)
+abline(lmWinsFGMdiff)
+summary(lmWinsFGMdiff)
+#Rsq = .6
+
+Diff_2008_2020 <- read_xlsx("Diff20082020.xlsx")
+lmWinsFGAdiff <- lm(`Win%` ~ FGA, data = Diff_2008_2020)
+plot(Diff_2008_2020$FGA, Diff_2008_2020$`Win%`)
+abline(lmWinsFGAdiff)
+summary(lmWinsFGAdiff)
+#Rsq = .03
+
+lmWinsORebDiff <- lm(`Win%` ~ OR, data = Diff_2008_2020)
+plot(Diff_2008_2020$OR, Diff_2008_2020$`Win%`)
+abline(lmWinsORebDiff)
+summary(lmWinsORebDiff)
+#Rsq = .004
+
+lmWinsDRebDiff <- lm(`Win%` ~ DR, data = Diff_2008_2020)
+plot(Diff_2008_2020$DR, Diff_2008_2020$`Win%`)
+abline(lmWinsDRebDiff)
+summary(lmWinsDRebDiff)
+#Rsq = .51
+
+lmWinsRebDiff <- lm(`Win%` ~ REB, data = Diff_2008_2020)
+plot(Diff_2008_2020$REB, Diff_2008_2020$`Win%`)
+abline(lmWinsRebDiff)
+summary(lmWinsRebDiff)
+#Rsq=.26
+
+lmWins3PADiff <- lm(`Win%` ~ `3PA`, data = Diff_2008_2020)
+plot(Diff_2008_2020$`3PA`, Diff_2008_2020$`Win%`)
+abline(lmWins3PADiff)
+summary(lmWins3PADiff)
+#Rsq = .07
+
+lmWins3PMDiff <- lm(`Win%` ~ `3PM`, data = Diff_2008_2020)
+plot(Diff_2008_2020$`3PM`, Diff_2008_2020$`Win%`)
+abline(lmWins3PMDiff)
+summary(lmWins3PMDiff)
+#Rsq = .21
+
+lmWins3PDiff <- lm(`Win%` ~ `3P%`, data = Diff_2008_2020)
+plot(Diff_2008_2020$`3P%`, Diff_2008_2020$`Win%`)
+abline(lmWins3PDiff)
+summary(lmWins3PDiff)
+#Rsq=.47
+
+lmWinsAstDiff <- lm(`Win%` ~ AST, data = Diff_2008_2020)
+plot(Diff_2008_2020$AST, Diff_2008_2020$`Win%`)
+abline(lmWinsAstDiff)
+summary(lmWinsAstDiff)
+#Rsq = .42
+
+lmWinsStlDiff <- lm(`Win%` ~ STL, data = Diff_2008_2020)
+plot(Diff_2008_2020$STL, Diff_2008_2020$`Win%`)
+abline(lmWinsStlDiff)
+summary(lmWinsStlDiff)
+#Rsq = .12
+
+lmWinsBlkDiff <- lm(`Win%` ~ BLK, data = Diff_2008_2020)
+plot(Diff_2008_2020$BLK, Diff_2008_2020$`Win%`)
+abline(lmWinsBlkDiff)
+summary(lmWinsBlkDiff)
+#Rsq = .25
+
+lmWinsTODiff <- lm(`Win%` ~ TO, data = Diff_2008_2020)
+plot(Diff_2008_2020$TO, Diff_2008_2020$`Win%`)
+abline(lmWinsTODiff)
+summary(lmWinsTODiff)
+#Rsq = .05
+
+lmWinsPFDiff <- lm(`Win%` ~ PF, data = Diff_2008_2020)
+plot(Diff_2008_2020$PF, Diff_2008_2020$`Win%`)
+abline(lmWinsPFDiff)
+summary(lmWinsPFDiff)
+#Rsq = .11
+
+lmWinsFTPDiff <- lm(`Win%` ~ `FT%`, data = Diff_2008_2020)
+plot(Diff_2008_2020$`FT%`, Diff_2008_2020$`Win%`)
+abline(lmWinsFTPDiff)
+summary(lmWinsFTPDiff)
+#Rsq = .03
+
+lmWinsFTMDiff <- lm(`Win%` ~ FTM, data = Diff_2008_2020)
+plot(Diff_2008_2020$FTM, Diff_2008_2020$`Win%`)
+abline(lmWinsFTMDiff)
+summary(lmWinsFTMDiff)
+#Rsq = .15
+
+lmWinsFTADiff <- lm(`Win%` ~ FTA, data = Diff_2008_2020)
+plot(Diff_2008_2020$FTA, Diff_2008_2020$`Win%`)
+abline(lmWinsFTADiff)
+summary(lmWinsFTADiff)
+#Rsq = .11
+```
+
+```{r}
+library(MuMIn)
+MLRWins <- lm(`Win%` ~ `FG%` + FGM + FGA + `3PM` + `3PA` + `3P%` + AST + DR + TO + FTM + `FT%` + FTA + OR + REB +STL +BLK +PF, data = Diff_2008_2020, na.action = "na.fail")
+summary(MLRWins)
+AIC_DIFF <- dredge(MLRWins)
+resid(MLRWins) #List of residuals
+plot(density(resid(MLRWins))) #A density plot
+qqnorm(resid(MLRWins)) # A quantile normal plot - good for checking normality
+qqline(resid(MLRWins))
+```
+```{R}
+MLRWinsAIC1 <- lm(`Win%` ~ `3PA` + `3PM` + `FG%` + `FT%` + FGA + FGM + FTA, data = Diff_2008_2020)
+summary(MLRWinsAIC1)
+ggpredict(MLRWinsAIC1,se=TRUE,interactive=TRUE)
+MLRWinsDiff <- lm(`Win%` ~ `FG%` + `3PM`+ STL + `FT%` +DR, data = Diff_2008_2020)
+summary(MLRWinsDiff)
+MLRWinsDiff1 <- lm(`Win%` ~ AST + `3P%`+DR +BLK, data = Diff_2008_2020)
+summary(MLRWinsDiff1)
+```
+Playoff Success
+```{r}
+Diff_2008_2020 <- read_xlsx("Diff20082020.xlsx")
+Playoff_Diff_2008_2020 <- filter(Diff_2008_2020, Playoffs == "Y")
+
+LmWinPPlayoffWins <- lm(`Playoff Wins` ~ `Win%`,data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$`Win%`, Playoff_Diff_2008_2020$`Playoff Wins`)
+abline(LmWinPPlayoffWins)
+summary(LmWinPPlayoffWins)
+#Rsq = .442
+
+lmFGdiffPlayoff <- lm(`Playoff Rounds Won` ~ `FG%`, data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$`FG%`, Playoff_Diff_2008_2020$`Playoff Rounds Won`)
+abline(lmFGdiffPlayoff)
+summary(lmFGdiffPlayoff)
+#Rsq = .275
+
+lmFGdiffPlayoffWins <- lm(`Playoff Wins` ~ `FG%`, data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$`FG%`, Playoff_Diff_2008_2020$`Playoff Wins`)
+abline(lmFGdiffPlayoffWins)
+summary(lmFGdiffPlayoffWins)
+#Rsq = .298
+
+Diff_2008_2020 <- read_xlsx("Diff20082020.xlsx")
+lmFGMdiffPlayoff <- lm(`Playoff Rounds Won` ~ FGM, data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$FGM, Playoff_Diff_2008_2020$`Playoff Rounds Won`)
+abline(lmFGMdiffPlayoff)
+summary(lmFGMdiffPlayoff)
+#Rsq = .126
+
+Diff_2008_2020 <- read_xlsx("Diff20082020.xlsx")
+lmFGMdiffPlayoffWins <- lm(`Playoff Wins` ~ FGM, data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$FGM, Playoff_Diff_2008_2020$`Playoff Wins`)
+abline(lmFGMdiffPlayoffWins)
+summary(lmFGMdiffPlayoffWins)
+#Rsq = .135
+
+lmDRebDiffPlayoff <- lm(`Playoff Rounds Won` ~ DR, data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$DR, Playoff_Diff_2008_2020$`Playoff Rounds Won`)
+abline(lmDRebDiffPlayoff)
+summary(lmDRebDiffPlayoff)
+#Rsq = .14
+
+lmDRebDiffPlayoffWins <- lm(`Playoff Wins` ~ DR, data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$DR, Playoff_Diff_2008_2020$`Playoff Wins`)
+abline(lmDRebDiffPlayoffWins)
+summary(lmDRebDiffPlayoffWins)
+#Rsq = .159
+
+lm3PDiffPlayoff <- lm(`Playoff Rounds Won` ~ `3P%`, data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$`3P%`, Playoff_Diff_2008_2020$`Playoff Rounds Won`)
+abline(lm3PDiffPlayoff)
+summary(lm3PDiffPlayoff)
+#Rsq = .145
+
+lm3PDiffPlayoffWins <- lm(`Playoff Wins` ~ `3P%`, data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$`3P%`, Playoff_Diff_2008_2020$`Playoff Wins`)
+abline(lm3PDiffPlayoffWins)
+summary(lm3PDiffPlayoffWins)
+#Rsq = .166
+
+lmAstDiffPlayoff <- lm(`Playoff Rounds Won` ~ AST, data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$AST, Playoff_Diff_2008_2020$`Playoff Rounds Won`)
+abline(lmAstDiffPlayoff)
+summary(lmAstDiffPlayoff)
+#Rsq = .066
+
+lmAstDiffPlayoffWins <- lm(`Playoff Wins` ~ AST, data = Playoff_Diff_2008_2020)
+plot(Playoff_Diff_2008_2020$AST, Playoff_Diff_2008_2020$`Playoff Wins`)
+abline(lmAstDiffPlayoffWins)
+summary(lmAstDiffPlayoffWins)
+#Rsq = .066
+
+
+
+```
